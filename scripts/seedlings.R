@@ -99,6 +99,9 @@ QAQC_null_tree <- SmWoody |>
          & (!(is.na(Length) & LF_Sm_Woody == "Small Tree")) # Small trees do not have length data
          & (!(is.na(Rooting) & (Community == "Coastal Strand" | Community == "Subalpine Shrubland")))) # No rooting class collected for coastal strand and subalpine
 
+QAQC_null_tree_puualii <- QAQC_null_tree |>
+  filter(Sampling_Frame == "Puu Alii")
+readr::write_excel_csv(QAQC_null_tree_puualii, "C:/Users/JJGross/Downloads/QAQC_null_tree_puualii.csv")
 # Shrub
 QAQC_null_shrub <- SmWoody |>
   filter(Life_Form == "Shrub") |>
@@ -154,9 +157,9 @@ QAQC_dup_LF_Sm_Woody <- SmWoody |>
 
 # ..............................................................................
 
-# All plots
+# All plots ----
 all_plots <- all_events |>
-  select(Unit_Code, Community, Sampling_Frame, Year, Plot_Number)
+  select(Unit_Code, Sampling_Frame, Year, Plot_Number)
 
 chk <- all_plots |>
   group_by(Sampling_Frame, Year) |>
@@ -192,7 +195,7 @@ SmWoody_categories_distinct <- SmWoody_categories |>
 SmWoody_categories_all_plots <- all_plots |>
   left_join(SmWoody_categories, by = join_by(Sampling_Frame), relationship = "many-to-many")
 
-# Seedling table
+# 2. Seedling table ----
 Seedling <- SmWoody |>
   filter(LF_Sm_Woody == "Seedling") %>%
   # All events (plot reads) without seedlings get added in here:
@@ -286,7 +289,8 @@ Seedling_complete <- Seedling |>
     fill = list(Count = 0),
     explicit = FALSE
   )
-)
+
+
 # Select desired filtering/grouping
 # Species, Length, Rooting, Status - HERE:
 f_grouping <- c()

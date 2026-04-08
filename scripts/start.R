@@ -7,27 +7,30 @@ library(tidyverse)
 library(here)
 
 #--- 1. Load Data (or) ----
-pacnveg_cache_path <- "C:/Users/JJGross/LocalDocuments/Databases_copied_local/EIPS"
+pacnveg_cache_path <- "C:/LocalDocuments/Databases_copied_local/EIPS"
 eips_file_info <- list.files(pacnveg_cache_path, full.names = T)
 eips_file_info
-#LoadPACNVeg(ftpc_params = "FTPC", eips_paths = eips_file_info,
-#                    cache = TRUE, force_refresh = TRUE)
+LoadPACNVeg(ftpc_params = "FTPC", eips_paths = eips_file_info,
+                    cache = TRUE, force_refresh = TRUE, TE_Species = FALSE)
 
 #--- 1. Read latest cache ----
-LoadPACNVeg(force_refresh = FALSE, eips_paths = "foo")
+LoadPACNVeg(force_refresh = FALSE, eips_paths = "foo", )
 
 # Write/Read csv from pacnvegetation package:
 #pacnveg_cache_path <- "C:/Users/JJGross/Documents/Databases_copied_local/R_WritePACNVeg"
 ts <- format(Sys.Date(), "%Y-%m-%d")
 pacnveg_cache_path <- paste0("data/vital_signs/", ts)
 dir.create(pacnveg_cache_path)
-WritePACNVeg(pacnveg_cache_path, create.folders = TRUE)
+WritePACNVeg(pacnveg_cache_path, create.folders = TRUE, certified = TRUE, overwrite = TRUE)
 
 # Read
-path_file_info <- file.info(list.files(pacnveg_cache_path, full.names = T))
+path_file_info <- file.info(list.files("data/vital_signs/", full.names = T))
 latest_folder <- rownames(path_file_info)[which.max(path_file_info$mtime)]
 latest_folder
 LoadPACNVeg(data_path = latest_folder,
+            data_source = "file")
+
+pacnvegetation::LoadPACNVeg(data_path = "data/vital_signs/2026-04-07",
             data_source = "file")
 
 names(FilterPACNVeg())
