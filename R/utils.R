@@ -882,6 +882,8 @@ GetColSpec <- function() {
     EIPS_data = readr::cols(Year = readr::col_integer(),
                             Cycle = readr::col_integer(),
                             Segment = readr::col_integer(),
+                            cf = readr::col_logical(),
+                            LOC = readr::col_character(),
                             Dead = readr::col_logical(),
                             Certified = readr::col_logical(),
                             Verified = readr::col_logical(),
