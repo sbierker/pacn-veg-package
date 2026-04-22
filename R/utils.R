@@ -72,7 +72,7 @@ ClearPACNVegCache <- function(silent = FALSE) {
 #' Load raw data into package environment
 #' @description Run this function before you do anything else.
 #'
-#' @param ftpc_params Connection information for FTPC database. Either a DSN name, a path to a csv containing connection information, or a named list of connection arguments. The csv or list should contain the following parameters:
+#' @param ftpc_params Connection information for FTPC database. Either a DSN name (Created in ODBC Data Source Administrator), a path to a csv containing connection information, or a named list of connection arguments. The csv or list should contain the following parameters:
 #' * Driver
 #' * Server
 #' * Database
@@ -108,7 +108,7 @@ ClearPACNVegCache <- function(silent = FALSE) {
 #' LoadPACNVeg(data_path = path_to_csv)
 #' }
 #'
-LoadPACNVeg <- function(ftpc_params = "pacn", eips_paths, data_path, data_source = "db", cache = TRUE, expire_interval_days = 7, force_refresh = FALSE, TE_Species = TRUE) {
+LoadPACNVeg <- function(ftpc_params = "FTPC", eips_paths, data_path, data_source = "db", cache = TRUE, expire_interval_days = 7, force_refresh = FALSE, TE_Species = TRUE) {
 
   ## Read from cache or database
   if (data_source == "db") {
@@ -391,7 +391,7 @@ ReadFTPC <- function(conn, TE_Species) {
       dplyr::distinct(Species_ID, .keep_all = TRUE) |>
     dplyr::mutate(across(-Species_ID, ~ paste0("Native_Sp_", as.character(row_number()))))
 
-    Species_extra2 <- Species_extra |>
+    Species_extra <- Species_extra |>
       dplyr::rows_update(spp_TE_extra, by = "Species_ID", unmatched = "ignore") |>
       dplyr::select(c(Species_ID, Update_Date, Update_By, Park, Life_Form, Nativity,
                       Distribution, Conservation_Status, Scientific_Name, Code,
@@ -400,10 +400,10 @@ ReadFTPC <- function(conn, TE_Species) {
                       Update_Comments, Park_Common_Name))
   }
 
-  Species <- Species_extra2 |>
+  Species <- Species_extra |>
     dplyr::select(c(Species_ID, Life_Form, Park, Nativity, Scientific_Name, Code))
 
-  Species_extra <- Species_extra2 |>
+  Species_extra <- Species |>
     dplyr::collect()
 
 
@@ -748,16 +748,16 @@ ReadEIPS <- function(db_paths) {
 GetColSpec <- function() {
   time_format <- "%Y-%m-%dT%H:%M:%SZ"
   col.spec <- list(
-    Events_extra_QAQC = readr::cols(Start_Date = readr::col_datetime(time_format),
+    Events_extra_QAQC = readr::cols(Start_Date = readr::col_datetime(format = "%Y-%m-%d %H:%M:%S"),
                                     Year = readr::col_integer(),
                                     Cycle = readr::col_integer(),
                                     Plot_Number = readr::col_integer(),
-                                    Entered_Date = readr::col_datetime(time_format),
-                                    Updated_Date = readr::col_datetime(time_format),
+                                    Entered_Date = readr::col_datetime(format = "%Y-%m-%d %H:%M:%S"),
+                                    Updated_Date = readr::col_datetime(format = "%Y-%m-%d %H:%M:%S"),
                                     Verified = readr::col_logical(),
-                                    Verified_Date = readr::col_datetime(time_format),
+                                    Verified_Date = readr::col_datetime(format = "%Y-%m-%d %H:%M:%S"),
                                     Certified = readr::col_logical(),
-                                    Certified_Date = readr::col_datetime(time_format),
+                                    Certified_Date = readr::col_datetime(format = "%Y-%m-%d %H:%M:%S"),
                                     Completion_Time = readr::col_double(),
                                     .default = readr::col_character()),
     Events_extra_xy = readr::cols(Year = readr::col_integer(),
@@ -781,8 +781,7 @@ GetColSpec <- function() {
                                      Certified = readr::col_logical(),
                                      Verified = readr::col_logical(),
                                      .default = readr::col_character()),
-    Species_extra = readr::cols(Update_Date = readr::col_datetime(time_format),
-                                .default = readr::col_character()),
+    Species_extra = readr::cols(.default = readr::col_character()),
     LgTrees = readr::cols(Year = readr::col_integer(),
                           Cycle = readr::col_integer(),
                           Plot_Number = readr::col_integer(),
@@ -848,10 +847,7 @@ GetColSpec <- function() {
                          Certified = readr::col_logical(),
                          Verified = readr::col_logical(),
                          .default = readr::col_character()),
-    Events_extra_QAQC_EIPS = readr::cols(Start_Date = readr::col_datetime(time_format),
-                                         Year = readr::col_integer(),
-                                         Cycle = readr::col_integer(),
-                                         Entered_Date = readr::col_datetime(time_format),
+    Events_extra_QAQC_EIPS = readr::cols(Entered_Date = readr::col_datetime(time_format),
                                          Updated_Date = readr::col_datetime(time_format),
                                          Verified = readr::col_logical(),
                                          Verified_Date = readr::col_datetime(time_format),
@@ -882,6 +878,8 @@ GetColSpec <- function() {
     EIPS_data = readr::cols(Year = readr::col_integer(),
                             Cycle = readr::col_integer(),
                             Segment = readr::col_integer(),
+                            cf = readr::col_logical(),
+                            LOC = readr::col_character(),
                             Dead = readr::col_logical(),
                             Certified = readr::col_logical(),
                             Verified = readr::col_logical(),
@@ -1027,8 +1025,8 @@ FilterOne <- function(data, data_name, filter_cols, case_sensitive, silent) {
 #' LoadPACNVeg("pacnveg", "path/to/access.mdb")
 #' WritePACNVeg("folder/for/csv/data", create.folders = TRUE)
 #' }
-WritePACNVeg <- function(dest.folder, create.folders = FALSE, overwrite = FALSE, park, sample_frame, community, certified, verified) {
-  data <- FilterPACNVeg(park = park, sample_frame = sample_frame, community = community, certified = certified, verified = verified)
+WritePACNVeg <- function(dest.folder, create.folders = FALSE, overwrite = FALSE, park, sample_frame, community, certified, verified, is_qa_plot) {
+  data <- FilterPACNVeg(park = park, sample_frame = sample_frame, community = community, certified = certified, verified = verified, is_qa_plot = is_qa_plot)
   dest.folder <- normalizePath(dest.folder, mustWork = FALSE)
   col.spec <- GetColSpec()
   file.paths <- file.path(dest.folder, paste0(names(col.spec), ".csv"))

@@ -4,11 +4,14 @@ library(tidyverse)
 #--- 1. Read latest cache ------------------------------------------------------
 
 #**  Make sure to download latest FTPC and EIPS data using start.R  *
-LoadPACNVeg(force_refresh = FALSE, eips_paths = "foo")
 
 names(FilterPACNVeg())
 
 all_presence <- FilterPACNVeg(data_name = "Presence")
+
+all_presence_QAQC <- FilterPACNVeg(data_name = "Presence", is_qa_plot = TRUE) |>
+  group_by(Cycle, Sampling_Frame, Plot_Number) |>
+  summarise(n = n_distinct(Plot_Number))
 
 all_cover <- FilterPACNVeg(data_name = "Understory")
 
@@ -16,11 +19,27 @@ all_EIPS <- FilterPACNVeg(data_name = "EIPS_data")
 
 all_shrubbelt <- FilterPACNVeg(data_name = "SmWoody")
 
+spp_extra <- FilterPACNVeg(data_name = "Species_extra")
+
+
+# Load the data (use csv files)
+data <- here::here("data", "vital_signs")
+path_file_info <- file.info(list.files(data, full.names = T))
+latest_folder <- rownames(path_file_info)[which.max(path_file_info$mtime)]
+
+LoadPACNVeg(data_path = latest_folder,
+            data_source = "file")
+
+names(FilterPACNVeg())
+
+all_LgTrees <- FilterPACNVeg(data_name = "LgTrees") |>
+  dplyr::filter(Unit_Code == "KALA") |>
+  dplyr::filter(Nativity == "Native")
 
 
 #--- 2. variable specification -------------------------------------------------
 
-var_sframe <- "Kaloko-Honokohau"
+var_sframe <- "Olaa"
 
 #nahuku_plots <- c(1, 4, 10, 12, 13, 14, 15, #fixed
 #                  46, 49, 51, 52, 54, 55, 56, 58, #2021 rotational
@@ -74,6 +93,13 @@ n_FTPC_table <- FilterPACNVeg(data_name = "Events_extra_other") |>
 n_FTPC_table_sf <- n_FTPC_table |>
   dplyr::filter(Sampling_Frame == var_sframe)
 
+# QAQC Plots:
+n_FTPC_table <- FilterPACNVeg(data_name = "Events_extra_other", is_qa_plot = TRUE) |>
+  dplyr::group_by(Sampling_Frame, Cycle) |>
+  dplyr::mutate(Year = min(Year)) |>
+  dplyr::group_by(Sampling_Frame, Plot_Type, Cycle, Year) |>
+  dplyr::summarise(n = n())
+
 
 ## qc_presence ---------------------------------------------------------------
 
@@ -94,8 +120,14 @@ qc_samp_lifeform <- pacnvegetation::FilterPACNVeg(data_name = "SmWoody",
 ## search trees/understory datasheets for a species------------------------------
 chk <- qc_sp_datasheets(sample_frame = var_sframe,
                  #plot_number = 51,
-                 #species_code = "CIBSP.",
+                 species_code = "METPOL1",
                  silent = FALSE)
+
+chk_qaqc_plot <- qc_sp_datasheets(sample_frame = var_sframe,
+                        #plot_number = 51,
+                        species_code = "METPOL1",
+                        is_qa_plot = TRUE,
+                        silent = FALSE)
 
 ## list of presence--------------------------------------------------------------
 all_pres <- pacnvegetation::FilterPACNVeg(data_name = "Presence") |>
@@ -108,9 +140,9 @@ all_pres_count <- all_pres |>
 
 
 ## Presence Dot Plots-----------------------------------------------------------
-var_plot_numbers <- c(1:10, 21:28)
+var_plot_numbers <- c(1:15)
 var_sframe
-save_folder_var <- "C:/Users/JJGross/OneDrive - DOI/Documents/Certification_Local/2021-2022 Certification/R_output"
+save_folder_var <- "C:/Users/JJGross/OneDrive - DOI/Documents/Certification_Local/2021-2022 Certification/R_output/new"
 
 for (x in var_plot_numbers) {
   pacnvegetation:::qc_FTPC_spp_pres_dot_plot(sample_frame = var_sframe,
@@ -139,7 +171,7 @@ for (x in var_plot_numbers) {
 }
 
 
-var_plot_number <- c(56)
+var_plot_number <- c(1)
 
 pacnvegetation::v_cover_bar_stats(plant_grouping = "Species",
                                   sample_frame = var_sframe,
@@ -168,7 +200,7 @@ chk_cover2 <- pacnvegetation::summarize_understory(combine_strata = TRUE,
 chk_cover2
 
 
-pacnvegetation::understory_spp_trends_rank(sample_frame = "Mauna Loa", remove_nativity = "Non-Native", paired_change = FALSE, top_n = 10)
+pacnvegetation::understory_spp_trends_rank(sample_frame = "Olaa", remove_nativity = "Non-Native", paired_change = FALSE, top_n = 10)
 pacnvegetation::understory_spp_trends_rank(sample_frame = "Mauna Loa", remove_nativity = "Native", paired_change = FALSE)
 pacnvegetation::understory_spp_trends_rank(sample_frame = "Mauna Loa", remove_nativity = "Non-Native", paired_change = TRUE)
 pacnvegetation::understory_spp_trends_rank(sample_frame = "Mauna Loa", remove_nativity = "Native", paired_change = TRUE)

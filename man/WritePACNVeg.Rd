@@ -12,7 +12,8 @@ WritePACNVeg(
   sample_frame,
   community,
   certified,
-  verified
+  verified,
+  is_qa_plot
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ WritePACNVeg(
 \item{certified}{Whether data are certified (TRUE/FALSE)}
 
 \item{verified}{Whether data are verified (TRUE/FALSE)}
+
+\item{is_qa_plot}{Whether the plots are QA plots or not (TRUE/FALSE) No argument defaults to FALSE. Can use "c(TRUE, FALSE)" without quotes to return both regular and QA plots.}
 }
 \value{
 None.

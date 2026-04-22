@@ -25,19 +25,34 @@ LoadPACNVeg(data_path = latest_folder,
 
 
 # Write/Read csv from pacnvegetation package:
-pacnveg_cache_path <- "C:/Users/JJGross/Documents/Databases_copied_local/R_WritePACNVeg"
-pacnveg_cache_path <- "C:/Users/JJGross/Documents/Databases_copied_local/certified"
+#pacnveg_cache_path <- "C:/Users/JJGross/Documents/Databases_copied_local/R_WritePACNVeg"
+ts <- format(Sys.Date(), "%Y-%m-%d")
+pacnveg_cache_path <- paste0("data/vital_signs/", ts)
+dir.create(pacnveg_cache_path)
+WritePACNVeg(pacnveg_cache_path, create.folders = TRUE, certified = TRUE, overwrite = TRUE)
 
 # Read
-path_file_info <- file.info(list.files(pacnveg_cache_path, full.names = T))
+path_file_info <- file.info(list.files("data/vital_signs/", full.names = T))
 latest_folder <- rownames(path_file_info)[which.max(path_file_info$mtime)]
 latest_folder
 LoadPACNVeg(data_path = latest_folder,
             data_source = "file")
 
+pacnvegetation::LoadPACNVeg(data_path = "data/vital_signs/2026-04-07",
+            data_source = "file")
+
 names(FilterPACNVeg())
 
 select_dataset <- FilterPACNVeg(data_name = "Enter Dataset Name Here")
+
+SmWoody <- FilterPACNVeg(data_name = "SmWoody")
+
+
+## STOP ##
+
+
+
+
 
 Events_FTPC <- FilterPACNVeg(data_name = "Events_extra_xy")
 Events_EIPS <- FilterPACNVeg(data_name = "Events_extra_other_EIPS")
@@ -52,7 +67,7 @@ Species_FTPC <- FilterPACNVeg(data_name = "Presence") #%>%
 #--- 2. Update and Write Data ----
 
 # ..........Update Data ----
-eips_database_folder_path <- "C:/Users/JJGross/Documents/Databases_copied_local/EIPS"
+eips_database_folder_path <- "C:/Users/JJGross/LocalDocuments/Databases_copied_local/EIPS"
 #eips_database_folder_path <- "C:/Users/JJGross/OneDrive - DOI/Documents/Data Science Assistance/2024/PACN_veg_Data_Science_Shared/data/EIPS_databases"
 eips_databases <- list.files(eips_database_folder_path,full.names = TRUE)
 eips_databases
@@ -83,7 +98,7 @@ hi_vegmap_db_paths <- c("C:/Users/JJGross/OneDrive - DOI/Documents/Veg_Map_Data/
                      "C:/Users/JJGross/OneDrive - DOI/Documents/Veg_Map_Data/puhodata.mdb")
 
 WAPA_vegmap_db_paths <- c("C:/Users/JJGross/Documents/Veg_Map_Data/wapadata.mdb")
-
+HAVO_vegmap_db_paths <- c("C:/Users/JJGross/OneDrive - DOI/Documents/Veg_Map_Data/havodata.accdb")
 
 # Veg map & species locations ----
 
@@ -92,6 +107,8 @@ Hawaii_vegmap_data2 <- read_vegmap_db(hi_vegmap_db_paths)
 readr::write_csv(Hawaii_vegmap_data2, paste0("C:/Users/JJGross/Downloads/vegmap_data_", Sys.Date(), ".csv"))
 
 WAPA_vegmap_data <- read_vegmap_db(WAPA_vegmap_db_paths)
+HAVO_vegmap_data <- read_vegmap_db(HAVO_vegmap_db_paths)
+
 
 leaflet::addCircleMarkers()
 
@@ -139,7 +156,7 @@ hi_vegmap_spp <- hi_vegmap_data %>%
 
 
 # Local Path to Veg Spp database
-veg_species_db_folder <-  "C:/Users/JJGross/Documents/Databases_copied_local/Veg_species_db"
+veg_species_db_folder <-  "C:/Users/JJGross/LocalDocuments/Databases_copied_local/Veg_species_db"
 # If only one database in folder, this will grab full path:
 veg_species_db_full_path <- list.files(veg_species_db_folder,full.names = TRUE)
 veg_species_db_full_path
@@ -147,6 +164,10 @@ veg_species_db_full_path
 raw_spp_data <- read_spp_db(veg_species_db_full_path)
 
 # Get master species list for a park (with ID_Field for field maps):
+
+# KAHO
+spp_list_KAHO <- master_spp_list(veg_species_db_full_path, park = 'NPSA')
+readr::write_excel_csv(spp_list_KAHO, paste0("C:/Users/JJGross/Downloads/spp_list_NPSA_", Sys.Date(), ".csv"))
 
 # KAHO
 spp_list_KAHO <- master_spp_list(veg_species_db_full_path, park = 'KAHO')

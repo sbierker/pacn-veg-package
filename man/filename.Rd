@@ -17,5 +17,5 @@ filename(pch, col, bg)
 Filename and path
 }
 \description{
-Helper function for \code{\link[=pchIcons]{pchIcons()}} and \code{\link[=build_legend]{build_legend()}}
+Helper function for \code{\link[=pchIcons]{pchIcons()}}
 }
